@@ -1,0 +1,12 @@
+diff --git a/include/secp256k1.h b/include/secp256k1.h
+--- a/include/secp256k1.h
++++ b/include/secp256k1.h
+@@ -151,6 +151,8 @@
+ # if defined(_WIN32)
+ #  if defined(SECP256K1_BUILD) && defined(DLL_EXPORT)
+ #   define SECP256K1_API __declspec(dllexport)
++#  elif !defined(SECP256K1_BUILD)
++#   define SECP256K1_API __declspec(dllimport)
+ #  else
+ #   define SECP256K1_API
+ #  endif

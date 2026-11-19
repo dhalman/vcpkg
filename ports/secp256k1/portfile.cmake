@@ -1,10 +1,14 @@
-vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
+set(patches)
+if(VCPKG_TARGET_IS_WINDOWS AND VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
+    list(APPEND patches windows-shared-api.patch)
+endif()
 
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO bitcoin-core/secp256k1
     REF 3efeb9da21368c02cad58435b2ccdf6eb4b359c3
     SHA512 6d792943f9277a1b4c36dad62389cb38e0b93efb570b6af6c41afdb936d10ca30d4c2e4e743fc0f113d1f9785891d1e9d1fe224d7b8abd4197a9f5febf0febd6
+    PATCHES ${patches}
 )
 
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt" DESTINATION "${SOURCE_PATH}")
@@ -38,6 +42,15 @@ if (BUILD_TOOLS OR BUILD_EXAMPLES)
         list(APPEND SECP256K1_TOOLS ecdsa_example ecdh_example schnorr_example)
     endif()
     
+    if(VCPKG_TARGET_IS_WINDOWS AND VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
+        # The relocated tools must load the same DLL as the installed consumers.
+        file(GLOB secp_dll "${CURRENT_PACKAGES_DIR}/bin/*secp256k1.dll")
+        list(LENGTH secp_dll count)
+        if(NOT count EQUAL 1)
+            message(FATAL_ERROR "Expected one shared secp256k1 runtime in bin")
+        endif()
+        file(COPY "${secp_dll}" DESTINATION "${CURRENT_PACKAGES_DIR}/tools/${PORT}")
+    endif()
     vcpkg_copy_tools(TOOL_NAMES ${SECP256K1_TOOLS} AUTO_CLEAN)
 endif()
 
